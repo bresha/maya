@@ -1,0 +1,4 @@
+REPO_URL: https://docs.getunleash.io/helm-charts
+REPO_NAME: unleash
+CHART_NAME: unleash
+CHART_VERSION: 2.1.3

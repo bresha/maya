@@ -1,0 +1,31 @@
+include:
+  - project: mindsmiths/companions/companions-deploy
+    ref: v3.x
+    file:
+      - standard.yml
+  - project: mindsmiths/core-deploy
+    ref: v3.x
+    file:
+      - docker-sail.yml
+
+variables:
+  build:
+    value: ""
+    description: "run"
+  SANDBOX_NODE_COUNT: "4"
+  PRODUCTION_NODE_COUNT: "4"
+
+Demo1 Build:
+  extends:
+    - .docker-sail
+  stage: Build
+  rules:
+    - if: $build == "run"
+  environment:
+    name: ${CI_COMMIT_REF_NAME}
+  variables:
+    DOCKERFILE: "Dockerfile"
+    BUILD_ENVIRONMENT: "."
+    IMAGE_PREFIX: "mindsmiths"
+    IMAGE_NAME: "demo1"
+    IMAGE_TAG: $CI_COMMIT_SHA

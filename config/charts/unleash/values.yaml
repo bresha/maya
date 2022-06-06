@@ -1,0 +1,46 @@
+enabled: true
+fullnameOverride: unleash
+service:
+  annotations:
+    external-dns.alpha.kubernetes.io/hostname: "unleash.{{ env.HOST_DOMAIN }}"
+ingress:
+  enabled: true
+  hosts:
+  - host: "unleash.{{ env.HOST_DOMAIN }}"
+    paths:
+    - path: /
+initContainers:
+- name: init-psql
+  image: mindsmiths/init-psql:release-1-2
+  env:
+    - name: POSTGRES_CLIENT_HOST
+      value: "{{ env.POSTGRES_CLIENT_HOST }}"
+    - name: POSTGRES_CLIENT_PORT
+      value: "{{ env.POSTGRES_CLIENT_PORT }}"
+    - name: POSTGRES_CLIENT_USERNAME
+      value: "{{ env.POSTGRES_CLIENT_USERNAME }}"
+    - name: PGPASSWORD
+      valueFrom:
+        secretKeyRef:
+          name: postgresql
+          key: postgresql-password
+    - name: DATABASE_NAME
+      value: unleash
+dbConfig:
+  host: "{{ env.POSTGRES_CLIENT_HOST }}"
+  user: "{{ env.POSTGRES_CLIENT_USERNAME }}"
+  pass: "{{ env.POSTGRES_CLIENT_PASSWORD }}"
+  port: {{ env.POSTGRES_CLIENT_PORT }}
+postgresql:
+  enabled: false
+resources:
+  requests:
+    cpu: 120m
+    memory: 100Mi
+nodeSelector:
+  project: {{ env.CI_PROJECT_NAME }}-{{ env.CI_COMMIT_REF_SLUG }}
+tolerations:
+  - key: "project"
+    operator: "Equal"
+    value: '{{ env.CI_PROJECT_NAME }}-{{ env.CI_COMMIT_REF_SLUG }}'
+    effect: "NoSchedule"

@@ -1,0 +1,248 @@
+package rules.maya;
+import com.mindsmiths.telegramAdapter.TelegramReceivedMessage;
+import com.mindsmiths.ruleEngine.model.Initialize;
+import com.mindsmiths.gpt3.completion.GPT3Completion;
+import com.mindsmiths.ruleEngine.model.Heartbeat
+
+import java.util.Date
+
+import agents.Maya;
+
+rule "First contact"
+    salience 100
+    when
+        initialize: Initialize() from entry-point "agent-created"
+        message: TelegramReceivedMessage() from entry-point "signals"
+        agent: Maya()
+    then
+        agent.sendMessage("Hi, my name is Maya and I'm your study assistant!");
+        agent.sendMessage("What is your name?");
+        agent.send("SMITH", initialize, "new-agent");
+        delete(message);
+end
+
+rule "Name given"
+    salience 90
+    when
+        message: TelegramReceivedMessage() from entry-point "signals"
+        agent: Maya(
+            name == null
+        )
+    then
+        modify(agent) {
+            setName(message.getText()),
+            setAskedStudyWithMe(true)
+        };
+        agent.sendMessage(String.format("Hi %1$s, Would you like to study with me?", agent.getName()));
+        delete(message);
+end
+
+rule "Handle message"
+    when
+        message: TelegramReceivedMessage() from entry-point "signals"
+        agent: Maya()
+    then
+        modify(agent) {addMessageToMemory("Human", message.getText())}
+        agent.askGPT3();
+        delete(message);
+end
+
+rule "Send GPT3 response"
+    when
+        gpt3Result: GPT3Completion() from entry-point "signals"
+        agent: Maya()
+    then
+        String response = gpt3Result.getBestResponse();
+        agent.sendMessage(response);
+        modify(agent) {addMessageToMemory("Maya", response)}
+        delete(gpt3Result);
+end
+
+
+rule "Answered yes to study with Maya"
+    salience 100
+    when
+        message: TelegramReceivedMessage(text.equalsIgnoreCase("yes")) from entry-point "signals"
+        agent: Maya(
+            askedStudyWithMe == true
+        )
+    then
+        modify(agent) {
+            setAskedStudyWithMe(false),
+            setAskedForPomodoro(true),
+            setPomodoroTimer(new Date())
+        };
+        agent.sendMessage("Great! We are going to try pomodoro technique.");
+        agent.sendMessage("We are going to study for 25 minutes and then have 5 minutes break!");
+        agent.sendMessage("Type 'start' when you are ready!");
+        delete(message);
+end
+
+rule "Answered no to study with Maya"
+    salience 100
+    when
+        message: TelegramReceivedMessage(text.equalsIgnoreCase("no")) from entry-point "signals"
+        agent: Maya(
+            askedStudyWithMe == true
+        )
+    then
+        modify(agent) {setAskedStudyWithMe(false)};
+        agent.sendMessage("That is a shame, you should study for school.");
+        agent.sendMessage("I'll let you play for now but I'm here if you want to study.");
+        delete(message);
+end
+
+rule "Answered undefined to study with Maya"
+    salience 90
+    when
+        message: TelegramReceivedMessage() from entry-point "signals"
+        agent: Maya(
+            askedStudyWithMe == true
+        )
+    then
+        agent.sendMessage("I don't understand you, please answer with yes or no.");
+        delete(message);
+end
+
+rule "Start pomodoro"
+    salience 100
+    when
+        message: TelegramReceivedMessage(text.equalsIgnoreCase("start")) from entry-point "signals"
+        agent: Maya()
+    then
+        modify(agent) {
+            setAskedForPomodoro(false),
+            setPomodoroOn(true),
+            setBreakOn(false),
+            setPomodoroTimer(new Date())
+        };
+        agent.sendMessage("OK, I started the timer, study for 25 minutes and I'll notify you about the break!");
+        delete(message);
+end
+
+rule "Start break"
+    salience 90
+    when
+        Heartbeat(ts: timestamp) from entry-point "signals"
+        agent: Maya(
+            pomodoroOn == true,
+            pomodoroTimer before[25m] ts
+        )
+    then
+        modify(agent) {
+            setBreakOn(true),
+            setPomodoroOn(false),
+            setPomodoroTimer(new Date())
+        };
+        agent.sendMessage("Hi, now is time to take a 5 minutes break!");
+end
+
+rule "Ask for another pomodoro after the break has finished"
+    salience 90
+    when
+        Heartbeat(ts: timestamp) from entry-point "signals"
+        agent: Maya(
+            breakOn == true,
+            pomodoroTimer before[5m] ts
+        )
+    then
+        modify(agent) {
+            setBreakOn(false),
+            setAskedForPomodoro(true),
+            setPomodoroTimer(new Date())
+        };
+        agent.sendMessage("Your break has finished! Would you like to start another pomodoro? Just type 'start'!");
+end
+
+rule "Asked for pomodoro but user didn't responded in five minutes"
+    salience 90
+    when
+        Heartbeat(ts: timestamp) from entry-point "signals"
+        agent: Maya(
+            askedForPomodoro == true,
+            pomodoroTimer before[5m] ts
+        )
+    then
+        modify(agent) {
+            setPomodoroTimer(new Date()),
+            incrementPomodoroQuestionCounter()
+        };
+        agent.sendMessage("Hey, you didn't started pomodoro. Type 'start' if you would like to begin studying or type 'cancel' if you don't have time now!");
+end
+
+rule "User wants to cancel pomodoro"
+    salience 100
+    when
+        message: TelegramReceivedMessage(text.equalsIgnoreCase("cancel")) from entry-point "signals"
+        agent: Maya(
+            askedForPomodoro == true
+        )
+    then
+        modify(agent) {
+            setPomodoroTimer(null),
+            setPomodoroOn(false),
+            setBreakOn(false),
+            setAskedForPomodoro(false)           
+        };
+        agent.sendMessage("I'm sorry to hear that, but fine, I'll cancel the pomodoro.");
+        delete(message);
+end
+
+rule "Cancel start pomodoro question if user don't respond in 2 times"
+    salience 100
+    when
+        Heartbeat(ts: timestamp) from entry-point "signals"
+        agent: Maya(
+            askedForPomodoro == true,
+            pomodoroQuestionCounter >= 2,
+            pomodoroTimer before[4m] ts
+        )
+    then
+        modify(agent) {
+            setPomodoroTimer(null),
+            setPomodoroOn(false),
+            setBreakOn(false),
+            setAskedForPomodoro(false),
+            setPomodoroQuestionCounter(0),
+            clearMemory()
+        };
+        agent.sendMessage("I see that you dont want to study with me. That is a shame! But I'll let you play.");
+end
+
+rule "Inform user about exam option"
+    salience 90
+    when
+        Heartbeat(ts: timestamp) from entry-point "signals"
+        agent: Maya(
+            notifiedAboutExamOption == false,
+            pomodoroOn == false,
+            breakOn == false,
+            lastInteractionTime before[10m] ts
+        )
+    then
+        modify(agent) {
+            setNotifiedAboutExamOption(true)
+        };
+        agent.sendMessage(String.format("Hey %1$s, did you know I can help you to prepare for exam!", agent.getName()));
+        agent.sendMessage("Just ask me how many questions you want and on what topic. For example: 'Please give me 5 questions about parrots.'");
+        agent.sendMessage("Try it!");
+end
+
+rule "Inform user about essay option"
+    salience 80
+    when
+        Heartbeat(ts: timestamp) from entry-point "signals"
+        agent: Maya(
+            notifiedAboutEssayOption == false,
+            pomodoroOn == false,
+            breakOn == false,
+            lastInteractionTime before[10m] ts
+        )
+    then
+        modify(agent) {
+            setNotifiedAboutEssayOption(true)
+        };
+        agent.sendMessage(String.format("Hey %1$s, did you know I can give you essay outline?", agent.getName()));
+        agent.sendMessage("For example, if you want to write essay about parrots just type 'Create an outline for an essay about parrots and how interesting they are:'");
+        agent.sendMessage("Dont forget to type colon at the end! Try it!");
+end
