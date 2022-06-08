@@ -4,6 +4,7 @@ import com.mindsmiths.ruleEngine.model.Agent;
 import com.mindsmiths.telegramAdapter.TelegramAdapterAPI;
 import com.mindsmiths.gpt3.GPT3AdapterAPI;
 import com.mindsmiths.gpt3.completion.GPT3Completion;
+import com.mindsmiths.GoogleTranslateAdapter.GoogleTranslateAdapterAPI;
 import com.mindsmiths.ruleEngine.util.Log;
 import java.util.List;
 import java.util.ArrayList;
@@ -26,6 +27,7 @@ public class Maya extends Agent {
     private boolean notifiedAboutExamOption = false;
     private boolean notifiedAboutEssayOption = false;
     private Date lastInteractionTime;
+    private String translationFor;
 
     public Maya() {
     }
@@ -80,5 +82,10 @@ public class Maya extends Agent {
             1, // best of
             null // logit bias
         );
+    }
+
+    public void translate(String text, String source, String target) {
+        String chatId = getConnections().get("telegram");
+        GoogleTranslateAdapterAPI.translateMessage(chatId, text, source, target);
     }
 }

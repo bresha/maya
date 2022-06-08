@@ -3,6 +3,7 @@ import com.mindsmiths.telegramAdapter.TelegramReceivedMessage;
 import com.mindsmiths.ruleEngine.model.Initialize;
 import com.mindsmiths.gpt3.completion.GPT3Completion;
 import com.mindsmiths.ruleEngine.model.Heartbeat
+import com.mindsmiths.GoogleTranslateAdapter.Result;
 
 import java.util.Date
 
@@ -15,8 +16,8 @@ rule "First contact"
         message: TelegramReceivedMessage() from entry-point "signals"
         agent: Maya()
     then
-        agent.sendMessage("Hi, my name is Maya and I'm your study assistant!");
-        agent.sendMessage("What is your name?");
+        agent.sendMessage("Hej, moje ime je Maya i ja sam tvoj virtualni asistent za učenje");
+        agent.sendMessage("Kako se ti zoveš?");
         agent.send("SMITH", initialize, "new-agent");
         delete(message);
 end
@@ -33,7 +34,7 @@ rule "Name given"
             setName(message.getText()),
             setAskedStudyWithMe(true)
         };
-        agent.sendMessage(String.format("Hi %1$s, Would you like to study with me?", agent.getName()));
+        agent.sendMessage(String.format("Pozdrav %1$s, Da li želiš učiti sa mnom?", agent.getName()));
         delete(message);
 end
 
@@ -42,7 +43,7 @@ rule "Handle message"
         message: TelegramReceivedMessage() from entry-point "signals"
         agent: Maya()
     then
-        modify(agent) {addMessageToMemory("Human", message.getText())}
+        modify(agent) {addMessageToMemory("Human", message.getText())};
         agent.askGPT3();
         delete(message);
 end
@@ -54,15 +55,38 @@ rule "Send GPT3 response"
     then
         String response = gpt3Result.getBestResponse();
         agent.sendMessage(response);
-        modify(agent) {addMessageToMemory("Maya", response)}
+        modify(agent) {addMessageToMemory("Maya", response)};
         delete(gpt3Result);
 end
 
+rule "Send translated text to user"
+    when
+        translationResult: Result() from entry-point "signals"
+        agent: Maya(
+            translationFor == 'user'
+        )
+    then
+        agent.sendMessage(translationResult);
+        modify(agent) {setTranslationFor(null)};
+        delete(translationResult);
+end
+
+rule "Send translated text to GPT-3"
+    when
+        translationResult: Result() from entry-point "signals"
+        agent: Maya(
+            translationFor == 'gpt3'
+        )
+    then
+        agent.askGPT3();
+        modify(agent) {setTranslationFor(null)};
+        delete(translationResult);
+end
 
 rule "Answered yes to study with Maya"
     salience 100
     when
-        message: TelegramReceivedMessage(text.equalsIgnoreCase("yes")) from entry-point "signals"
+        message: TelegramReceivedMessage(text.equalsIgnoreCase("da")) from entry-point "signals"
         agent: Maya(
             askedStudyWithMe == true
         )
@@ -72,23 +96,23 @@ rule "Answered yes to study with Maya"
             setAskedForPomodoro(true),
             setPomodoroTimer(new Date())
         };
-        agent.sendMessage("Great! We are going to try pomodoro technique.");
-        agent.sendMessage("We are going to study for 25 minutes and then have 5 minutes break!");
-        agent.sendMessage("Type 'start' when you are ready!");
+        agent.sendMessage("Odlično! Isprobat ćemo Pomodoro tehniku učenja. "
+                            + "To ti je kad učimo 25 minuta i onda uzmemo pauzu od 5 minuta.");
+        agent.sendMessage("Upiši 'start'!");
         delete(message);
 end
 
 rule "Answered no to study with Maya"
     salience 100
     when
-        message: TelegramReceivedMessage(text.equalsIgnoreCase("no")) from entry-point "signals"
+        message: TelegramReceivedMessage(text.equalsIgnoreCase("ne")) from entry-point "signals"
         agent: Maya(
             askedStudyWithMe == true
         )
     then
         modify(agent) {setAskedStudyWithMe(false)};
-        agent.sendMessage("That is a shame, you should study for school.");
-        agent.sendMessage("I'll let you play for now but I'm here if you want to study.");
+        agent.sendMessage("To je loše, trebali bi smo učiti za školu");
+        agent.sendMessage("Pustit ću te da se igraš ali ja sam ovdje ako želiš učiti!");
         delete(message);
 end
 
@@ -100,7 +124,7 @@ rule "Answered undefined to study with Maya"
             askedStudyWithMe == true
         )
     then
-        agent.sendMessage("I don't understand you, please answer with yes or no.");
+        agent.sendMessage("Ne razumijem te, molim te upiši 'da' ili 'ne'!");
         delete(message);
 end
 
@@ -116,7 +140,7 @@ rule "Start pomodoro"
             setBreakOn(false),
             setPomodoroTimer(new Date())
         };
-        agent.sendMessage("OK, I started the timer, study for 25 minutes and I'll notify you about the break!");
+        agent.sendMessage("OK, počela sam odbrojavati, uči 25 minuta i ja ću te obavjestiti o pauzi!");
         delete(message);
 end
 
@@ -134,7 +158,7 @@ rule "Start break"
             setPomodoroOn(false),
             setPomodoroTimer(new Date())
         };
-        agent.sendMessage("Hi, now is time to take a 5 minutes break!");
+        agent.sendMessage("Hej, počela je pauza! Odmori se 5 minuta.");
 end
 
 rule "Ask for another pomodoro after the break has finished"
@@ -151,7 +175,7 @@ rule "Ask for another pomodoro after the break has finished"
             setAskedForPomodoro(true),
             setPomodoroTimer(new Date())
         };
-        agent.sendMessage("Your break has finished! Would you like to start another pomodoro? Just type 'start'!");
+        agent.sendMessage("Tvoja pauza je završila! Želiš li započeti još jedan pomodoro? Samo upiši 'start'!");
 end
 
 rule "Asked for pomodoro but user didn't responded in five minutes"
@@ -167,7 +191,8 @@ rule "Asked for pomodoro but user didn't responded in five minutes"
             setPomodoroTimer(new Date()),
             incrementPomodoroQuestionCounter()
         };
-        agent.sendMessage("Hey, you didn't started pomodoro. Type 'start' if you would like to begin studying or type 'cancel' if you don't have time now!");
+        agent.sendMessage("Hej, nisi započeo/la pomodoro. " 
+            + "Upiši 'start' ako želiš nastaviti učiti ili upiši 'cancel' ako nemaš vremena sada!");
 end
 
 rule "User wants to cancel pomodoro"
@@ -184,7 +209,7 @@ rule "User wants to cancel pomodoro"
             setBreakOn(false),
             setAskedForPomodoro(false)           
         };
-        agent.sendMessage("I'm sorry to hear that, but fine, I'll cancel the pomodoro.");
+        agent.sendMessage("Ah, žao mi je to čuti, ali dobro, otkazat ću pomodoro.");
         delete(message);
 end
 
@@ -206,7 +231,8 @@ rule "Cancel start pomodoro question if user don't respond in 2 times"
             setPomodoroQuestionCounter(0),
             clearMemory()
         };
-        agent.sendMessage("I see that you dont want to study with me. That is a shame! But I'll let you play.");
+        agent.sendMessage("Hm, vidim da ne želiš učiti sa mnom. " 
+                        + "Žao mi je zbog toga ali otkazat ću pomodoro!");
 end
 
 rule "Inform user about exam option"
@@ -223,9 +249,10 @@ rule "Inform user about exam option"
         modify(agent) {
             setNotifiedAboutExamOption(true)
         };
-        agent.sendMessage(String.format("Hey %1$s, did you know I can help you to prepare for exam!", agent.getName()));
-        agent.sendMessage("Just ask me how many questions you want and on what topic. For example: 'Please give me 5 questions about parrots.'");
-        agent.sendMessage("Try it!");
+        agent.sendMessage(String.format("Hrj %1$s, da li znaš da te mogu pripremiti za ispit? ", agent.getName())
+            + "Samo me pitaj koliko pitanja želiš i na koju temu. " 
+            + "Na primjer: 'Molim te, daj mi 5 pitanja o papigama'.");
+        agent.sendMessage("Probaj!");
 end
 
 rule "Inform user about essay option"
@@ -242,7 +269,7 @@ rule "Inform user about essay option"
         modify(agent) {
             setNotifiedAboutEssayOption(true)
         };
-        agent.sendMessage(String.format("Hey %1$s, did you know I can give you essay outline?", agent.getName()));
-        agent.sendMessage("For example, if you want to write essay about parrots just type 'Create an outline for an essay about parrots and how interesting they are:'");
-        agent.sendMessage("Dont forget to type colon at the end! Try it!");
+        agent.sendMessage(String.format("Hej %1$s, jesi li znao/la da ti mogu dati obris eseja?"", agent.getName())
+            + "Na primjer, ako želiš napisati esej o papigama samo upiši 'Napravi obris za esej o papigama i koliko su one zanimljive:'.");
+        agent.sendMessage("Ne zaboravi dodati dvotočku na kraju. I koristi riječ obris umjesto nacrta uvijek! Probaj!");
 end
