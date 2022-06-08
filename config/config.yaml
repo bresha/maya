@@ -116,3 +116,12 @@ services:
     resources:
       cpu: 81m
       memory: 130Mi
+  google-translate-adapter:
+    type: python
+    db:
+      mongo: true
+    resources:
+      cpu: 100m
+      memory: 100Mi
+    env:
+      GOOGLE_TRANSLATE_API_KEY: "{{env.GOOGLE_TRANSLATE_API_KEY}}"
