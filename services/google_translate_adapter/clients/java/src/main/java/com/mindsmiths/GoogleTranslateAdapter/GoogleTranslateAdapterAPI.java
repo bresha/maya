@@ -12,16 +12,10 @@ import com.mindsmiths.sdk.messaging.Messaging;
 public class GoogleTranslateAdapterAPI {
     private static final String topic = Messaging.getInputTopicName("google_translate_adapter");
 
-    public static void getSomething(String userId) {
-        Serializable payload = new InputDataPayload(userId);
-        BaseMessage message = new BaseMessage("GET_SOMETHING", payload);
+    public static void translateMessage(String userId, String text, String source, String target) {
+        Serializable payload = new InputDataPayload(userId, text, source, target);
+        BaseMessage message = new BaseMessage("TRANSLATE_MESSAGE", payload);
         message.send(topic);
         new CallbackResult(message.getConfiguration().getMessageId(), Result.class).save();
-    }
-
-    public static void doSomething(String userId) {
-        Serializable payload = new InputDataPayload(userId);
-        BaseMessage message = new BaseMessage("DO_SOMETHING", payload);
-        message.send(topic);
     }
 }

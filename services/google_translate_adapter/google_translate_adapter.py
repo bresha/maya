@@ -5,6 +5,7 @@ from forge.core.base import BaseService
 from forge.core.api import api
 
 from googleapiclient.discovery import build
+import settings as keys
 
 logger = logging.getLogger(settings.DEFAULT_LOGGER)
 
@@ -16,14 +17,14 @@ class GoogleTranslateAdapter(BaseService):
         self.start_message_consumer()
 
     @api
-    def do_something(self, userId: str, text: str, source: str, target:str) -> str:
+    def translate_message(self, userId: str, text: str, source: str, target: str) -> str:
         """
             This function is automatically called when a new message is sent to the service's topic.
         """
         translated_text = None
 
         try:
-            service = build('translate', 'v2', developerKey=settings.GOOGLE_TRANSLATE_API_KEY)
+            service = build('translate', 'v2', developerKey=keys.GOOGLE_TRANSLATE_API_KEY)
 
             translation = service.translations().list(
                 source=source,

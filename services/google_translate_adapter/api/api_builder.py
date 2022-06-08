@@ -8,5 +8,5 @@ class GoogleTranslateAdapterAPI(BaseAPI):
     service_name = google_translate_adapter.SERVICE_NAME
 
     @staticmethod
-    def do_something(userId: str) -> Future[str]:
+    def translate_message(userId: str) -> Future[str]:
         """Does something"""

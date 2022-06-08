@@ -12,4 +12,7 @@ import lombok.AllArgsConstructor;
 @AllArgsConstructor
 public class InputDataPayload implements Serializable {
     private String userId;
+    private String text;
+    private String source;
+    private String target;
 }
