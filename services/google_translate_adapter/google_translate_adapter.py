@@ -5,7 +5,7 @@ from forge.core.base import BaseService
 from forge.core.api import api
 
 from googleapiclient.discovery import build
-import settings as keys
+from .settings import GOOGLE_TRANSLATE_API_KEY
 
 logger = logging.getLogger(settings.DEFAULT_LOGGER)
 
@@ -24,7 +24,7 @@ class GoogleTranslateAdapter(BaseService):
         translated_text = None
 
         try:
-            service = build('translate', 'v2', developerKey=keys.GOOGLE_TRANSLATE_API_KEY)
+            service = build('translate', 'v2', developerKey=GOOGLE_TRANSLATE_API_KEY)
 
             translation = service.translations().list(
                 source=source,

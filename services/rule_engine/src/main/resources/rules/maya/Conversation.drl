@@ -38,39 +38,18 @@ rule "Name given"
         delete(message);
 end
 
-rule "Send message to GPT-3"
+// Message from user, in croatian, is received and sent to translate
+rule "Translate user message for GPT-3"
     when
         message: TelegramReceivedMessage() from entry-point "signals"
         agent: Maya()
     then
-        modify(agent) {addMessageToMemory("Human", message.getText())};
-        agent.askGPT3();
+        modify(agent) {setTranslationFor('gpt3')};
+        agent.translate(message, 'hr', 'en');
         delete(message);
 end
 
-rule "Send GPT3 response"
-    when
-        gpt3Result: GPT3Completion() from entry-point "signals"
-        agent: Maya()
-    then
-        String response = gpt3Result.getBestResponse();
-        agent.sendMessage(response);
-        modify(agent) {addMessageToMemory("Maya", response)};
-        delete(gpt3Result);
-end
-
-rule "Send GPT-3 translated text to user"
-    when
-        translationResult: Result() from entry-point "signals"
-        agent: Maya(
-            translationFor == 'user'
-        )
-    then
-        agent.sendMessage(translationResult);
-        modify(agent) {setTranslationFor('gpt3')};
-        delete(translationResult);
-end
-
+// User message is now in english, added to memory and memory is sent to GPT-3
 rule "Send user translated text to GPT-3"
     when
         translationResult: Result() from entry-point "signals"
@@ -78,8 +57,36 @@ rule "Send user translated text to GPT-3"
             translationFor == 'gpt3'
         )
     then
+        modify(agent) {
+            addMessageToMemory("Human", translationResult.getText()), 
+            setTranslationFor('user')
+        };
         agent.askGPT3();
-        modify(agent) {setTranslationFor('user')};
+        delete(translationResult);
+end
+
+// Response from GPT3, in english, is added to memory and sent to translate for user
+rule "Translate GPT3 response"
+    when
+        gpt3Result: GPT3Completion() from entry-point "signals"
+        agent: Maya()
+    then
+        String response = gpt3Result.getBestResponse();
+        modify(agent) {addMessageToMemory("Maya", response)};
+        agent.translate(response, 'en', 'hr');
+        delete(gpt3Result);
+end
+
+// GPT-3 response is translated to croatian and sent to user
+rule "Send GPT-3 translated text to user"
+    when
+        translationResult: Result() from entry-point "signals"
+        agent: Maya(
+            translationFor == 'user'
+        )
+    then
+        modify(agent) {setTranslationFor('gpt3')};
+        agent.sendMessage(translationResult);
         delete(translationResult);
 end
 
@@ -249,7 +256,8 @@ rule "Inform user about exam option"
         modify(agent) {
             setNotifiedAboutExamOption(true)
         };
-        agent.sendMessage(String.format("Hrj %1$s, da li znaš da te mogu pripremiti za ispit? ", agent.getName())
+        agent.sendMessage(String.format(
+            "Hej %1$s, da li znaš da te mogu pripremiti za ispit? ", agent.getName())
             + "Samo me pitaj koliko pitanja želiš i na koju temu. " 
             + "Na primjer: 'Molim te, daj mi 5 pitanja o papigama'.");
         agent.sendMessage("Probaj!");
@@ -269,7 +277,8 @@ rule "Inform user about essay option"
         modify(agent) {
             setNotifiedAboutEssayOption(true)
         };
-        agent.sendMessage(String.format("Hej %1$s, jesi li znao/la da ti mogu dati obris eseja?"", agent.getName())
+        agent.sendMessage(String.format(
+            "Hej %1$s, jesi li znao/la da ti mogu dati obris eseja?"", agent.getName())
             + "Na primjer, ako želiš napisati esej o papigama samo upiši 'Napravi obris za esej o papigama i koliko su one zanimljive:'.");
         agent.sendMessage("Ne zaboravi dodati dvotočku na kraju. I koristi riječ obris umjesto nacrta uvijek! Probaj!");
 end
