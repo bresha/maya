@@ -34,11 +34,11 @@ rule "Name given"
             setName(message.getText()),
             setAskedStudyWithMe(true)
         };
-        agent.sendMessage(String.format("Pozdrav %1$s, Da li želiš učiti sa mnom?", agent.getName()));
+        agent.sendMessage(String.format("Pozdrav %1$s, da li želiš učiti sa mnom?", agent.getName()));
         delete(message);
 end
 
-rule "Handle message"
+rule "Send message to GPT-3"
     when
         message: TelegramReceivedMessage() from entry-point "signals"
         agent: Maya()
@@ -59,7 +59,7 @@ rule "Send GPT3 response"
         delete(gpt3Result);
 end
 
-rule "Send translated text to user"
+rule "Send GPT-3 translated text to user"
     when
         translationResult: Result() from entry-point "signals"
         agent: Maya(
@@ -67,11 +67,11 @@ rule "Send translated text to user"
         )
     then
         agent.sendMessage(translationResult);
-        modify(agent) {setTranslationFor(null)};
+        modify(agent) {setTranslationFor('gpt3')};
         delete(translationResult);
 end
 
-rule "Send translated text to GPT-3"
+rule "Send user translated text to GPT-3"
     when
         translationResult: Result() from entry-point "signals"
         agent: Maya(
@@ -79,7 +79,7 @@ rule "Send translated text to GPT-3"
         )
     then
         agent.askGPT3();
-        modify(agent) {setTranslationFor(null)};
+        modify(agent) {setTranslationFor('user')};
         delete(translationResult);
 end
 
@@ -192,13 +192,13 @@ rule "Asked for pomodoro but user didn't responded in five minutes"
             incrementPomodoroQuestionCounter()
         };
         agent.sendMessage("Hej, nisi započeo/la pomodoro. " 
-            + "Upiši 'start' ako želiš nastaviti učiti ili upiši 'cancel' ako nemaš vremena sada!");
+            + "Upiši 'start' ako želiš nastaviti učiti ili upiši 'otkaži' ako nemaš vremena sada!");
 end
 
 rule "User wants to cancel pomodoro"
     salience 100
     when
-        message: TelegramReceivedMessage(text.equalsIgnoreCase("cancel")) from entry-point "signals"
+        message: TelegramReceivedMessage(text.equalsIgnoreCase("otkaži")) from entry-point "signals"
         agent: Maya(
             askedForPomodoro == true
         )
