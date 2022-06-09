@@ -9,6 +9,8 @@ import com.mindsmiths.ruleEngine.util.Log;
 import java.util.List;
 import java.util.ArrayList;
 import java.util.Date;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import lombok.*;
 
 @Getter
@@ -28,6 +30,7 @@ public class Maya extends Agent {
     private boolean notifiedAboutEssayOption = false;
     private Date lastInteractionTime;
     private String translationFor;
+    private LocalDateTime timeToMakeSchedule;
 
     public Maya() {
     }
@@ -87,5 +90,25 @@ public class Maya extends Agent {
     public void translate(String text, String source, String target) {
         String chatId = getConnections().get("telegram");
         GoogleTranslateAdapterAPI.translateMessage(chatId, text, source, target);
+    }
+
+    public void setScheduleTime() {
+        if (timeToMakeSchedule == null) {
+            LocalDateTime now = LocalDateTime.now();
+            LocalDateTime tomorrow = now.plusDays(1);
+            int tomorrowYear = tomorrow.getYear();
+            int tomorrowMonth = tomorrow.getMonthValue();
+            int tomorrowDay = tomorrow.getDayOfMonth();
+
+            String scheduleTime = String.format(
+                "%d-%d-%d 06:00", tomorrowYear, tomorrowMonth, tomorrowDay
+            );
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
+            
+            timeToMakeSchedule = LocalDateTime.parse(scheduleTime, formatter);
+            
+        } else {
+            timeToMakeSchedule = timeToMakeSchedule.plusDays(1);
+        }
     }
 }
