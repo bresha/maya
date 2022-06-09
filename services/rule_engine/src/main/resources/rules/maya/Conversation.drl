@@ -163,7 +163,8 @@ rule "Start break"
         modify(agent) {
             setBreakOn(true),
             setPomodoroOn(false),
-            setPomodoroTimer(new Date())
+            setPomodoroTimer(new Date()),
+            clearMemory()
         };
         agent.sendMessage("Hej, počela je pauza! Odmori se 5 minuta.");
 end
@@ -181,6 +182,7 @@ rule "Ask for another pomodoro after the break has finished"
             setBreakOn(false),
             setAskedForPomodoro(true),
             setPomodoroTimer(new Date())
+            clearMemory()
         };
         agent.sendMessage("Tvoja pauza je završila! Želiš li započeti još jedan pomodoro? Samo upiši 'start'!");
 end
@@ -254,7 +256,8 @@ rule "Inform user about exam option"
         )
     then
         modify(agent) {
-            setNotifiedAboutExamOption(true)
+            setNotifiedAboutExamOption(true),
+            clearMemory()
         };
         agent.sendMessage(String.format(
             "Hej %1$s, da li znaš da te mogu pripremiti za ispit? ", agent.getName())
@@ -275,7 +278,8 @@ rule "Inform user about essay option"
         )
     then
         modify(agent) {
-            setNotifiedAboutEssayOption(true)
+            setNotifiedAboutEssayOption(true),
+            clearMemory()
         };
         agent.sendMessage(String.format(
             "Hej %1$s, jesi li znao/la da ti mogu dati obris eseja?", agent.getName())
