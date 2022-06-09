@@ -45,7 +45,7 @@ rule "Translate user message for GPT-3"
         agent: Maya()
     then
         modify(agent) {setTranslationFor('gpt3')};
-        agent.translate(message, 'hr', 'en');
+        agent.translate(message.getText(), 'hr', 'en');
         delete(message);
 end
 
@@ -58,7 +58,7 @@ rule "Send user translated text to GPT-3"
         )
     then
         modify(agent) {
-            addMessageToMemory("Human", translationResult.getText()), 
+            addMessageToMemory("Human", translationResult.getResult()), 
             setTranslationFor('user')
         };
         agent.askGPT3();
@@ -86,7 +86,7 @@ rule "Send GPT-3 translated text to user"
         )
     then
         modify(agent) {setTranslationFor('gpt3')};
-        agent.sendMessage(translationResult);
+        agent.sendMessage(translationResult.getResult());
         delete(translationResult);
 end
 
@@ -278,7 +278,7 @@ rule "Inform user about essay option"
             setNotifiedAboutEssayOption(true)
         };
         agent.sendMessage(String.format(
-            "Hej %1$s, jesi li znao/la da ti mogu dati obris eseja?"", agent.getName())
+            "Hej %1$s, jesi li znao/la da ti mogu dati obris eseja?", agent.getName())
             + "Na primjer, ako želiš napisati esej o papigama samo upiši 'Napravi obris za esej o papigama i koliko su one zanimljive:'.");
         agent.sendMessage("Ne zaboravi dodati dvotočku na kraju. I koristi riječ obris umjesto nacrta uvijek! Probaj!");
 end

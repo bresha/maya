@@ -6,7 +6,7 @@
 
     <groupId>com.mindsmiths</groupId>
     <artifactId>google-translate-adapter-client</artifactId>
-    <version>4.0.0a1</version>
+    <version>4.0.0a0</version>
 
     <properties>
         <maven.compiler.target>13</maven.compiler.target>
