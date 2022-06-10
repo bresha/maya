@@ -16,6 +16,7 @@ rule "First contact"
         message: TelegramReceivedMessage() from entry-point "signals"
         agent: Maya()
     then
+        modify(agent) {setScheduleTime()};
         agent.sendMessage("Hej, moje ime je Maya i ja sam tvoj virtualni asistent za učenje");
         agent.sendMessage("Kako se ti zoveš?");
         agent.send("SMITH", initialize, "new-agent");
@@ -209,7 +210,8 @@ rule "User wants to cancel pomodoro"
     when
         message: TelegramReceivedMessage(text.equalsIgnoreCase("otkaži")) from entry-point "signals"
         agent: Maya(
-            askedForPomodoro == true
+            askedForPomodoro == true,
+            scheduleOn == false
         )
     then
         modify(agent) {
@@ -285,4 +287,49 @@ rule "Inform user about essay option"
             "Hej %1$s, jesi li znao/la da ti mogu dati obris eseja?", agent.getName())
             + "Na primjer, ako želiš napisati esej o papigama samo upiši 'Napravi obris za esej o papigama i koliko su one zanimljive:'.");
         agent.sendMessage("Ne zaboravi dodati dvotočku na kraju. I koristi riječ obris umjesto nacrta uvijek! Probaj!");
+end
+
+rule "Ask user to create study schedule every morning"
+    when
+        Heartbeat(ts: timestamp) from entry-point "signals"
+        agent: Maya(
+            scheduleOn == false,
+            timeToMakeSchedule before[1s] ts
+        )
+    then
+        modify(agent) {
+            setAskedForSchedule(true)
+        };
+        agent.sendMessage(
+            String.format("Dobro jutro %1$s, idemo se dogovoriti kada ćeš danas početi učiti i koliko dugo ćeš učiti!. ", agent.getName())
+            + "Prvo mi napiši kada ćeš početi učiti, na primjer ako želiš početi učiti u 15 sati i 45 minuta upiši '15:45'!"
+        );
+end
+
+rule "User answers for schedule start time question"
+    salience 100
+    when
+        message: TelegramReceivedMessage() from entry-point "signals"
+        agent: Maya(
+            askedForSchedule == true
+        )
+    then
+        modify(agent) {
+            trySetStartScheduleTime(message.getText()),
+        };
+        delete(message);
+end
+
+rule "User answers for schedule duration question"
+    salience 100
+    when
+        message: TelegramReceivedMessage() from entry-point "signals"
+        agent: Maya(
+            askedForScheduleDuration == true
+        )
+    then
+        modify(agent) {
+            trySetNumberOfPomodoro(message.getText())
+        };
+        delete(message);
 end

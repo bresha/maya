@@ -10,6 +10,7 @@ import java.util.List;
 import java.util.ArrayList;
 import java.util.Date;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import lombok.*;
 
@@ -30,7 +31,12 @@ public class Maya extends Agent {
     private boolean notifiedAboutEssayOption = false;
     private Date lastInteractionTime;
     private String translationFor;
-    private LocalDateTime timeToMakeSchedule;
+    private Date timeToMakeSchedule;
+    private boolean askedForSchedule;
+    private Date scheduleStart;
+    private boolean askedForScheduleDuration;
+    private int numberOfPomodoro;
+    private boolean scheduleOn;
 
     public Maya() {
     }
@@ -105,10 +111,86 @@ public class Maya extends Agent {
             );
             DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
             
-            timeToMakeSchedule = LocalDateTime.parse(scheduleTime, formatter);
+            timeToMakeSchedule = convertLocalDateTimeToDate(
+                LocalDateTime.parse(scheduleTime, formatter)
+            );
             
         } else {
-            timeToMakeSchedule = timeToMakeSchedule.plusDays(1);
+            
+            LocalDateTime timeConverted = convertDateToLocalDateTime(timeToMakeSchedule);
+            LocalDateTime tomorrowTime = timeConverted.plusDays(1);
+            timeToMakeSchedule = convertLocalDateTimeToDate(tomorrowTime);
+        }
+    }
+
+    public void trySetStartScheduleTime(String strTime) {
+        try {
+            String[] arrTime = strTime.split(":");
+
+            if (arrTime.length != 2 || arrTime[0].length() > 2 || arrTime[1].length() > 2) {
+                throw new Exception("Incorrect format of time!");
+            }
+
+            int hour = Integer.parseInt(arrTime[0]);
+            int minute = Integer.parseInt(arrTime[1]);
+
+            LocalDateTime now = LocalDateTime.now();
+            int year = now.getYear();
+            int month = now.getMonthValue();
+            int day = now.getDayOfMonth();
+
+            String scheduleTime = String.format(
+                "%d-%d-%d %d:%d", year, month, day, hour, minute
+            );
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
+
+            LocalDateTime scheduleStartTime = LocalDateTime.parse(scheduleTime, formatter);
+            LocalDateTime decrementedScheduleStartTime = scheduleStartTime.minusHours(2); 
+
+            if (decrementedScheduleStartTime.isBefore(now)) {
+                throw new Exception("Time for start schedule is before current time!");
+            }
+
+            scheduleStart = convertLocalDateTimeToDate(decrementedScheduleStartTime);
+            setAskedForSchedule(false);
+            setAskedForScheduleDuration(true);
+
+            sendMessage(
+                "Postavila sam vrijeme učenja! Sada upiši koliko pomodora želiš učiti, " +
+                "jedan pomodoro je pola sata. Na primjer ako želiš učiti 2 i pol sata upiši '5'."
+            );
+
+        } catch (Exception e) {
+            Log.info("Error when tried to set start schedule time: " + e.getMessage());
+            sendMessage(
+                "Ne razumijem tvoj odgovor! Molim te upiši odgovor u pravom formatu, "
+                + "naprimjer ako želiš početi učiti u 15 sati i 45 minuta upiši '15:45'!"
+            );
+        }
+    }
+
+    private LocalDateTime convertDateToLocalDateTime(Date dateToConvert) {
+        return dateToConvert.toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime();
+    }
+
+    private Date convertLocalDateTimeToDate(LocalDateTime dateToConvert) {
+        return Date.from(dateToConvert.atZone(ZoneId.systemDefault()).toInstant());
+    }
+
+    public void trySetNumberOfPomodoro(String strNumPomodoro) {
+         try {
+            int numPomodoro = Integer.parseInt(strNumPomodoro);
+            numberOfPomodoro = numPomodoro;
+            setAskedForScheduleDuration(false);
+            setScheduleOn(true);
+            sendMessage(
+                "OK, raspored učenja je spreman, ja ću ti javiti kada trebaš početi!"
+            );   
+        } catch (Exception e) {
+            Log.info("Error when tried to set number of pomodoro!");
+            sendMessage(
+                "Ne razumijem tvoj odgovor! Trebaš upisati brojkom koliko pomodora želiš učiti!"
+            );
         }
     }
 }
