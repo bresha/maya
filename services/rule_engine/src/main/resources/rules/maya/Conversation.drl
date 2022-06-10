@@ -176,13 +176,14 @@ rule "Ask for another pomodoro after the break has finished"
         Heartbeat(ts: timestamp) from entry-point "signals"
         agent: Maya(
             breakOn == true,
+            scheduleStarted == false,
             pomodoroTimer before[5m] ts
         )
     then
         modify(agent) {
             setBreakOn(false),
             setAskedForPomodoro(true),
-            setPomodoroTimer(new Date())
+            setPomodoroTimer(new Date()),
             clearMemory()
         };
         agent.sendMessage("Tvoja pauza je završila! Želiš li započeti još jedan pomodoro? Samo upiši 'start'!");
@@ -211,7 +212,6 @@ rule "User wants to cancel pomodoro"
         message: TelegramReceivedMessage(text.equalsIgnoreCase("otkaži")) from entry-point "signals"
         agent: Maya(
             askedForPomodoro == true,
-            scheduleOn == false
         )
     then
         modify(agent) {
@@ -332,4 +332,67 @@ rule "User answers for schedule duration question"
             trySetNumberOfPomodoro(message.getText())
         };
         delete(message);
+end
+
+rule "Start schedule"
+    when
+        Heartbeat(ts: timestamp) from entry-point "signals"
+        agent: Maya(
+            scheduleOn == true,
+            scheduleStart before[1s] ts
+        )
+    then
+        modify(agent) {
+            setScheduleStarted(true),
+            decrementNumberOfPomodoro(),
+            setPomodoroTimer(new Date()),
+            setPomodoroOn(true)
+        };
+        agent.sendMessage(
+            String.format("Hej %1$s, počelo je vrijeme za dogovoreno učenje, ti samo uči a ja ću te obavijestiti o pauzi!", agent.getName())
+        );
+end
+
+rule "Start another pomodoro after the break has finished and schedule is on"
+    when
+        Heartbeat(ts: timestamp) from entry-point "signals"
+        agent: Maya(
+            breakOn == true,
+            scheduleStarted == true,
+            numberOfPomodoro > 0,
+            pomodoroTimer before[5m] ts
+        )
+    then
+        modify(agent) {
+            setBreakOn(false),
+            setPomodoroOn(true),
+            setPomodoroTimer(new Date()),
+            clearMemory(),
+            decrementNumberOfPomodoro()
+        };
+        agent.sendMessage("Tvoja pauza je završila! Započinjem još jedan pomodoro! Počni učiti!");
+end
+
+rule "Learning schedule has finished"
+    when
+        Heartbeat(ts: timestamp) from entry-point "signals"
+        agent: Maya(
+            breakOn == true,
+            scheduleStarted == true,
+            numberOfPomodoro == 0,
+            pomodoroTimer before[5m] ts
+        )
+    then
+        modify(agent) {
+            setBreakOn(false),
+            setPomodoroOn(false),
+            setPomodoroTimer(null),
+            setScheduleStart(null),
+            setNumberOfPomodoro(null),
+            setScheduleOn(false),
+            scheduleStarted(false)
+        };
+        agent.sendMessage(
+            String.format("Hej %1$s, gotovo je dogovoreno učenje, sada je vrijeme za igru!", agent.getName())
+        );
 end

@@ -37,6 +37,7 @@ public class Maya extends Agent {
     private boolean askedForScheduleDuration;
     private int numberOfPomodoro;
     private boolean scheduleOn;
+    private boolean scheduleStarted;
 
     public Maya() {
     }
@@ -192,5 +193,9 @@ public class Maya extends Agent {
                 "Ne razumijem tvoj odgovor! Trebaš upisati brojkom koliko pomodora želiš učiti!"
             );
         }
+    }
+
+    public void decrementNumberOfPomodoro() {
+        numberOfPomodoro -= 1;
     }
 }
