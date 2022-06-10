@@ -108,7 +108,7 @@ public class Maya extends Agent {
             int tomorrowDay = tomorrow.getDayOfMonth();
 
             String scheduleTime = String.format(
-                "%d-%d-%d 06:00", tomorrowYear, tomorrowMonth, tomorrowDay
+                "%04d-%02d-%02d 06:00", tomorrowYear, tomorrowMonth, tomorrowDay
             );
             DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
             
@@ -141,7 +141,7 @@ public class Maya extends Agent {
             int day = now.getDayOfMonth();
 
             String scheduleTime = String.format(
-                "%d-%d-%d %d:%d", year, month, day, hour, minute
+                "%04d-%02d-%02d %02d:%02d", year, month, day, hour, minute
             );
             DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
 
@@ -153,8 +153,8 @@ public class Maya extends Agent {
             }
 
             scheduleStart = convertLocalDateTimeToDate(decrementedScheduleStartTime);
-            setAskedForSchedule(false);
-            setAskedForScheduleDuration(true);
+            askedForSchedule = false;
+            askedForScheduleDuration = true;
 
             sendMessage(
                 "Postavila sam vrijeme učenja! Sada upiši koliko pomodora želiš učiti, " +
@@ -182,8 +182,8 @@ public class Maya extends Agent {
          try {
             int numPomodoro = Integer.parseInt(strNumPomodoro);
             numberOfPomodoro = numPomodoro;
-            setAskedForScheduleDuration(false);
-            setScheduleOn(true);
+            askedForScheduleDuration = false;
+            scheduleOn = true;
             sendMessage(
                 "OK, raspored učenja je spreman, ja ću ti javiti kada trebaš početi!"
             );   

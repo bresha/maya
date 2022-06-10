@@ -5,7 +5,7 @@ import com.mindsmiths.gpt3.completion.GPT3Completion;
 import com.mindsmiths.ruleEngine.model.Heartbeat
 import com.mindsmiths.GoogleTranslateAdapter.Result;
 
-import java.util.Date
+import java.util.Date;
 
 import agents.Maya;
 
@@ -316,7 +316,7 @@ rule "User answers for schedule start time question"
         )
     then
         modify(agent) {
-            trySetStartScheduleTime(message.getText()),
+            trySetStartScheduleTime(message.getText())
         };
         delete(message);
 end
@@ -390,7 +390,7 @@ rule "Learning schedule has finished"
             setPomodoroTimer(null),
             setScheduleStart(null),
             setScheduleOn(false),
-            scheduleStarted(false)
+            setScheduleStarted(false)
         };
         agent.sendMessage(
             String.format("Hej %1$s, gotovo je dogovoreno učenje, sada je vrijeme za igru!", agent.getName())
