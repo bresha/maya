@@ -21,10 +21,10 @@ public class Maya extends Agent {
     private List<String> memory = new ArrayList<>();
     private int MAX_MEMORY = 6;
     private String name;
-    private boolean askedStudyWithMe;
-    private boolean askedForPomodoro;
-    private boolean pomodoroOn;
-    private boolean breakOn;
+    private boolean askedStudyWithMe = false;
+    private boolean askedForPomodoro = false;
+    private boolean pomodoroOn = false;
+    private boolean breakOn = false;
     private Date pomodoroTimer;
     private int pomodoroQuestionCounter = 0;
     private boolean notifiedAboutExamOption = false;
@@ -32,12 +32,12 @@ public class Maya extends Agent {
     private Date lastInteractionTime;
     private String translationFor;
     private Date timeToMakeSchedule;
-    private boolean askedForSchedule;
+    private boolean askedForSchedule = false;
     private Date scheduleStart;
-    private boolean askedForScheduleDuration;
-    private int numberOfPomodoro;
-    private boolean scheduleOn;
-    private boolean scheduleStarted;
+    private boolean askedForScheduleDuration = false;
+    private int numberOfPomodoro = 0;
+    private boolean scheduleOn = false;
+    private boolean scheduleStarted = false;
 
     public Maya() {
     }

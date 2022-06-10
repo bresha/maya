@@ -212,6 +212,7 @@ rule "User wants to cancel pomodoro"
         message: TelegramReceivedMessage(text.equalsIgnoreCase("otkaži")) from entry-point "signals"
         agent: Maya(
             askedForPomodoro == true,
+            scheduleStarted == false
         )
     then
         modify(agent) {
@@ -388,7 +389,6 @@ rule "Learning schedule has finished"
             setPomodoroOn(false),
             setPomodoroTimer(null),
             setScheduleStart(null),
-            setNumberOfPomodoro(null),
             setScheduleOn(false),
             scheduleStarted(false)
         };
