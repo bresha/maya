@@ -390,7 +390,8 @@ rule "Learning schedule has finished"
             setPomodoroTimer(null),
             setScheduleStart(null),
             setScheduleOn(false),
-            setScheduleStarted(false)
+            setScheduleStarted(false),
+            setScheduleTime()
         };
         agent.sendMessage(
             String.format("Hej %1$s, gotovo je dogovoreno učenje, sada je vrijeme za igru!", agent.getName())

@@ -100,28 +100,20 @@ public class Maya extends Agent {
     }
 
     public void setScheduleTime() {
-        if (timeToMakeSchedule == null) {
-            LocalDateTime now = LocalDateTime.now();
-            LocalDateTime tomorrow = now.plusDays(1);
-            int tomorrowYear = tomorrow.getYear();
-            int tomorrowMonth = tomorrow.getMonthValue();
-            int tomorrowDay = tomorrow.getDayOfMonth();
+        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime tomorrow = now.plusDays(1);
+        int tomorrowYear = tomorrow.getYear();
+        int tomorrowMonth = tomorrow.getMonthValue();
+        int tomorrowDay = tomorrow.getDayOfMonth();
 
-            String scheduleTime = String.format(
-                "%04d-%02d-%02d 06:00", tomorrowYear, tomorrowMonth, tomorrowDay
-            );
-            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
-            
-            timeToMakeSchedule = convertLocalDateTimeToDate(
-                LocalDateTime.parse(scheduleTime, formatter)
-            );
-            
-        } else {
-            
-            LocalDateTime timeConverted = convertDateToLocalDateTime(timeToMakeSchedule);
-            LocalDateTime tomorrowTime = timeConverted.plusDays(1);
-            timeToMakeSchedule = convertLocalDateTimeToDate(tomorrowTime);
-        }
+        String scheduleTime = String.format(
+            "%04d-%02d-%02d 06:00", tomorrowYear, tomorrowMonth, tomorrowDay
+        );
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
+        
+        timeToMakeSchedule = convertLocalDateTimeToDate(
+            LocalDateTime.parse(scheduleTime, formatter)
+        );
     }
 
     public void trySetStartScheduleTime(String strTime) {
