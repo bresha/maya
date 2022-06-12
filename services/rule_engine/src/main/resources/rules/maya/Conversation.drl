@@ -396,7 +396,6 @@ rule "Learning schedule has finished"
             setScheduleStarted(false),
             setScheduleTime()
         };
-        agent.sendMessage(
-            String.format("Hej %1$s, gotovo je dogovoreno učenje, sada je vrijeme za igru!", agent.getName())
-        );
+        agent.sendDailyLearningSummary();
+        agent.sendWeeklyLearningSummary();
 end

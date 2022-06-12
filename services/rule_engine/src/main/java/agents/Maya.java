@@ -9,6 +9,7 @@ import com.mindsmiths.ruleEngine.util.Log;
 import java.util.List;
 import java.util.ArrayList;
 import java.util.Date;
+import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
@@ -227,7 +228,7 @@ public class Maya extends Agent {
         return false;
     }
 
-    public void sendLearningSummary() {
+    public void sendDailyLearningSummary() {
         int lastIndex = pomodoroDaliyMemory.size() - 1;
         
         if (lastIndex > 0 && pomodoroDaliyMemory.get(lastIndex) > pomodoroDaliyMemory.get(lastindex - 1)) {
@@ -246,6 +247,60 @@ public class Maya extends Agent {
             sendMessage(
                 String.format("Hej %s, gotovo je dogovoreno učenje, sada je vrijeme za igru!", name)
             ); 
+        }
+    }
+
+    public void sendWeeklyLearningSummary() {
+        LocalDate today = LocalDate.now();
+        DayOfWeek dayOfWeek = today.getDayOfWeek();
+
+        if (dayOfWeek.getValue() == 7) {
+            twoWeeksAvgMemory[0] = twoWeeksAvgMemory[1];
+            twoWeeksAvgMemory[1] = calculateWeeklyAvg();
+            trimPomodoroDaliyMemory();
+
+            if (twoWeeksAvgMemory[0] != null && Float.compare(twoWeeksAvgMemory[1], twoWeeksAvgMemory[0]) > 0) {
+                sendMessage(
+                    String.format("Ovaj tjedan si učio/la %.2f pomodora dnevno više nego prošli tjedan! Bravo!", 
+                    (twoWeeksAvgMemory[1] - twoWeeksAvgMemory[0]))
+                );
+            } else if (twoWeeksAvgMemory[0] != null && Float.compare(twoWeeksAvgMemory[1], twoWeeksAvgMemory[0]) == 0) {
+                sendMessage(
+                    "Ovaj tjedan si učio/la jednako kao i prošli tjedan! Nije loše!"
+                );
+            } else {
+                sendMessage(
+                    String.format("Ovaj tjedan si učio/la %.2f pomodora dnevno manje nego prošli tjedan! To je loše!", 
+                    (twoWeeksAvgMemory[0] - twoWeeksAvgMemory[1]))
+                );
+            }
+        }
+    }
+
+    private float calculateWeeklyAvg() {
+        int daysInAWeek = 7;
+
+        if (pomodoroDaliyMemory.size() < daysInAWeek) {
+            daysInAWeek = pomodoroDaliyMemory.size();
+        }
+
+        int lastIndex = pomodoroDaliyMemory.size() - 1;
+        int firstIndex = lastIndex - daysInAWeek;
+        
+        float sum = 0;
+        for (int i = firstIndex; i <= lastIndex; i++) {
+            sum += pomodoroDaliyMemory[i];
+        }
+
+        float avg = sum / daysInAWeek;
+
+        return avg;
+    }
+
+    private void trimPomodoroDaliyMemory() {
+        if (pomodoroDaliyMemory.size() > 8) {
+            pomodoroDaliyMemory = 
+                pomodoroDaliyMemory.subList(pomodoroDaliyMemory.size() -1, pomodoroDaliyMemory.size());
         }
     }
 }
