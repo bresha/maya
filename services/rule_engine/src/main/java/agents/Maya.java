@@ -40,8 +40,8 @@ public class Maya extends Agent {
     private boolean scheduleOn = false;
     private boolean scheduleStarted = false;
     private List<Integer> pomodoroDaliyMemory = new ArrayList<>();
-    private float twoWeekAvgMemory[] = new float[2];
     private LocalDateTime lastPomodoroTime;
+    private float twoWeeksAvgMemory[] = new float[2];
 
     public Maya() {
     }
