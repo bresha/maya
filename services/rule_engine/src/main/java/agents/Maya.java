@@ -226,4 +226,26 @@ public class Maya extends Agent {
 
         return false;
     }
+
+    public void sendLearningSummary() {
+        int lastIndex = pomodoroDaliyMemory.size() - 1;
+        
+        if (lastIndex > 0 && pomodoroDaliyMemory.get(lastIndex) > pomodoroDaliyMemory.get(lastindex - 1)) {
+            sendMessage(
+                String.format("Hej %s, gotovo je dogovoreno učenje, danas si učio/la više nego jučer! Bravo!", name)
+            );
+        } else if (lastIndex > 0 && pomodoroDaliyMemory.get(lastIndex) < pomodoroDaliyMemory.get(lastindex - 1)) {
+            sendMessage(
+                String.format("Hej %s, gotovo je dogovoreno učenje, danas si učio/la manje nego jučer! To je loše, treba više učiti!", name)
+            );
+        } else if (lastIndex > 0 && pomodoroDaliyMemory.get(lastIndex) == pomodoroDaliyMemory.get(lastindex - 1)) {
+            sendMessage(
+                String.format("Hej %s, gotovo je dogovoreno učenje, danas si učio/la jednako kao i jučer! To je OK!", name)
+            );
+        } else {
+            sendMessage(
+                String.format("Hej %s, gotovo je dogovoreno učenje, sada je vrijeme za igru!", name)
+            ); 
+        }
+    }
 }
