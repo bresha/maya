@@ -65,6 +65,7 @@ public class Maya extends Agent {
     }
 
     public void sendMessage(String text) {
+        Log.info("Sent message:\n" + text);
         String chatId = getConnections().get("telegram");
         TelegramAdapterAPI.sendMessage(chatId, text);
         lastInteractionTime = new Date();
@@ -95,6 +96,7 @@ public class Maya extends Agent {
     }
 
     public void translate(String text, String source, String target) {
+        Log.info("Translation input:\n" + text);
         String chatId = getConnections().get("telegram");
         GoogleTranslateAdapterAPI.translateMessage(chatId, text, source, target);
     }
