@@ -9,6 +9,7 @@ import com.mindsmiths.ruleEngine.util.Log;
 import java.util.List;
 import java.util.ArrayList;
 import java.util.Date;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
@@ -38,6 +39,9 @@ public class Maya extends Agent {
     private int numberOfPomodoro = 0;
     private boolean scheduleOn = false;
     private boolean scheduleStarted = false;
+    private List<Integer> pomodoroDaliyMemory = new ArrayList<>();
+    private float twoWeekAvgMemory[] = new float[2];
+    private LocalDateTime lastPomodoroTime;
 
     public Maya() {
     }
@@ -191,5 +195,35 @@ public class Maya extends Agent {
 
     public void decrementNumberOfPomodoro() {
         numberOfPomodoro -= 1;
+    }
+
+    public void incrementPomodoroDailyMemory(Date now) {
+        LocalDateTime nowConverted = convertDateToLocalDateTime(now);
+        LocalDateTime nowCorrect = nowConverted.plusHours(2);
+
+        if (pomodoroDaliyMemory.isEmpty() || isNextDay(nowCorrect)) {
+            pomodoroDaliyMemory.add(1);
+        } else {
+            int index = pomodoroDaliyMemory.size() - 1;
+            Integer lastElement = pomodoroDaliyMemory.get(index);
+            lastElement += 1;
+            pomodoroDaliyMemory.set(index, lastElement);
+        }
+
+        lastPomodoroTime = nowCorrect;
+    }
+
+    private boolean isNextDay(LocalDateTime now) {
+        int nowYear = now.getYear();
+        int nowDay = now.getDayOfYear();
+
+        int lastYear = lastPomodoroTime.getYear();
+        int lastDay = lastPomodoroTime.getDayOfYear();
+
+        if (nowYear > lastYear || nowDay > lastDay) {
+            return true;
+        }
+
+        return false;
     }
 }
