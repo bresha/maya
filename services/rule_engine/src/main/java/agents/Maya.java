@@ -231,15 +231,15 @@ public class Maya extends Agent {
     public void sendDailyLearningSummary() {
         int lastIndex = pomodoroDaliyMemory.size() - 1;
         
-        if (lastIndex > 0 && pomodoroDaliyMemory.get(lastIndex) > pomodoroDaliyMemory.get(lastindex - 1)) {
+        if (lastIndex > 0 && pomodoroDaliyMemory.get(lastIndex) > pomodoroDaliyMemory.get(lastIndex - 1)) {
             sendMessage(
                 String.format("Hej %s, gotovo je dogovoreno učenje, danas si učio/la više nego jučer! Bravo!", name)
             );
-        } else if (lastIndex > 0 && pomodoroDaliyMemory.get(lastIndex) < pomodoroDaliyMemory.get(lastindex - 1)) {
+        } else if (lastIndex > 0 && pomodoroDaliyMemory.get(lastIndex) < pomodoroDaliyMemory.get(lastIndex - 1)) {
             sendMessage(
                 String.format("Hej %s, gotovo je dogovoreno učenje, danas si učio/la manje nego jučer! To je loše, treba više učiti!", name)
             );
-        } else if (lastIndex > 0 && pomodoroDaliyMemory.get(lastIndex) == pomodoroDaliyMemory.get(lastindex - 1)) {
+        } else if (lastIndex > 0 && pomodoroDaliyMemory.get(lastIndex) == pomodoroDaliyMemory.get(lastIndex - 1)) {
             sendMessage(
                 String.format("Hej %s, gotovo je dogovoreno učenje, danas si učio/la jednako kao i jučer! To je OK!", name)
             );
@@ -259,12 +259,12 @@ public class Maya extends Agent {
             twoWeeksAvgMemory[1] = calculateWeeklyAvg();
             trimPomodoroDaliyMemory();
 
-            if (twoWeeksAvgMemory[0] != null && Float.compare(twoWeeksAvgMemory[1], twoWeeksAvgMemory[0]) > 0) {
+            if (twoWeeksAvgMemory[0] != 0.0f && Float.compare(twoWeeksAvgMemory[1], twoWeeksAvgMemory[0]) > 0) {
                 sendMessage(
                     String.format("Ovaj tjedan si učio/la %.2f pomodora dnevno više nego prošli tjedan! Bravo!", 
                     (twoWeeksAvgMemory[1] - twoWeeksAvgMemory[0]))
                 );
-            } else if (twoWeeksAvgMemory[0] != null && Float.compare(twoWeeksAvgMemory[1], twoWeeksAvgMemory[0]) == 0) {
+            } else if (twoWeeksAvgMemory[0] != 0.0f && Float.compare(twoWeeksAvgMemory[1], twoWeeksAvgMemory[0]) == 0) {
                 sendMessage(
                     "Ovaj tjedan si učio/la jednako kao i prošli tjedan! Nije loše!"
                 );
@@ -289,7 +289,7 @@ public class Maya extends Agent {
         
         float sum = 0;
         for (int i = firstIndex; i <= lastIndex; i++) {
-            sum += pomodoroDaliyMemory[i];
+            sum += pomodoroDaliyMemory.get(i);
         }
 
         float avg = sum / daysInAWeek;
