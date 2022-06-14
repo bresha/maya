@@ -42,7 +42,7 @@ public class Maya extends Agent {
     private boolean scheduleStarted = false;
     private List<Integer> pomodoroDaliyMemory = new ArrayList<>();
     private LocalDateTime lastPomodoroTime;
-    private float twoWeeksAvgMemory[] = new float[2];
+    private List<Float> weeklyAvgMemory = new ArrayList<>();
 
     public Maya() {
     }
@@ -255,25 +255,34 @@ public class Maya extends Agent {
         DayOfWeek dayOfWeek = today.getDayOfWeek();
 
         if (dayOfWeek.getValue() == 7) {
-            twoWeeksAvgMemory[0] = twoWeeksAvgMemory[1];
-            twoWeeksAvgMemory[1] = calculateWeeklyAvg();
+            weeklyAvgMemory.add(calculateWeeklyAvg());
             trimPomodoroDaliyMemory();
 
-            if (twoWeeksAvgMemory[0] != 0.0f && Float.compare(twoWeeksAvgMemory[1], twoWeeksAvgMemory[0]) > 0) {
+            int lastIndex = weeklyAvgMemory.size() - 1;
+
+            if (weeklyAvgMemory.size() >= 2 && Float.compare(weeklyAvgMemory.get(lastIndex), weeklyAvgMemory.get(lastIndex - 1)) > 0) {
                 sendMessage(
                     String.format("Ovaj tjedan si učio/la %.2f pomodora dnevno više nego prošli tjedan! Bravo!", 
-                    (twoWeeksAvgMemory[1] - twoWeeksAvgMemory[0]))
+                    (weeklyAvgMemory.get(lastIndex) - weeklyAvgMemory.get(lastIndex -1)))
                 );
-            } else if (twoWeeksAvgMemory[0] != 0.0f && Float.compare(twoWeeksAvgMemory[1], twoWeeksAvgMemory[0]) == 0) {
+            } else if (weeklyAvgMemory.size() >= 2 && Float.compare(weeklyAvgMemory.get(lastIndex), weeklyAvgMemory.get(lastIndex - 1)) == 0) {
                 sendMessage(
                     "Ovaj tjedan si učio/la jednako kao i prošli tjedan! Nije loše!"
                 );
             } else {
                 sendMessage(
                     String.format("Ovaj tjedan si učio/la %.2f pomodora dnevno manje nego prošli tjedan! To je loše!", 
-                    (twoWeeksAvgMemory[0] - twoWeeksAvgMemory[1]))
+                    (weeklyAvgMemory.get(lastIndex -1) - weeklyAvgMemory.get(lastIndex)))
                 );
             }
+
+            trimWeeklyAvgMemory();
+        }
+    }
+
+    private void trimWeeklyAvgMemory() {
+        if (weeklyAvgMemory.size() > 2) {
+            weeklyAvgMemory = weeklyAvgMemory.subList(weeklyAvgMemory.size() - 2, weeklyAvgMemory.size());
         }
     }
 
